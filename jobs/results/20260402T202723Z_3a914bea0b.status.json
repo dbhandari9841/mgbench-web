@@ -1,0 +1,5 @@
+{
+  "request_id": "20260402T202723Z_3a914bea0b",
+  "state": "submit_failed",
+  "error": "Submitting job(s).\nERROR: Failed to commit job submission into the queue.\nERROR: \n     | Standard batch schedds cannot use EOS within the submit file (although jobs can copy data to/from EOS)\n     | --> See https://batchdocs.web.cern.ch/troubleshooting/eos.html#no-eos-submission-allowed\n     |\n     | To move you submit/input files to EOS and avoid AFS completely, use EosSubmit schedds.\n     | --> See https://batchdocs.web.cern.ch/local/eossubmit.html"
+}

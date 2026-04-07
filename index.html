@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>MadGraph Benchmark</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --bg-1: #08111d;
+      --bg-2: #0e1a2b;
+      --panel: rgba(20, 34, 56, 0.82);
+      --panel-2: rgba(17, 28, 46, 0.92);
+      --border: rgba(126, 170, 255, 0.22);
+      --glow: rgba(84, 149, 255, 0.18);
+      --text: #e8eefc;
+      --muted: #aab7d1;
+      --accent: #5fb0ff;
+      --accent-2: #7bf0ff;
+      --green: #61d17f;
+      --red: #ff7b91;
+      --yellow: #ffd166;
+      --shadow: 0 10px 30px rgba(0,0,0,0.35);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 20%, rgba(67, 130, 255, 0.14), transparent 28%),
+        radial-gradient(circle at 80% 15%, rgba(103, 212, 255, 0.10), transparent 24%),
+        radial-gradient(circle at 70% 80%, rgba(89, 128, 255, 0.10), transparent 30%),
+        linear-gradient(180deg, #06101a 0%, #0a1423 45%, #08111d 100%);
+      min-height: 100vh;
+    }
+
+    .container {
+      width: min(1440px, calc(100% - 32px));
+      margin: 20px auto 40px;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(31, 49, 77, 0.62), rgba(18, 30, 49, 0.86));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.04),
+        0 0 0 1px rgba(255,255,255,0.01),
+        0 14px 35px rgba(0,0,0,0.35);
+      backdrop-filter: blur(10px);
+    }
+
+    .panel-header {
+      padding: 14px 18px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 18px;
+      font-weight: 600;
+      color: #f2f6ff;
+      letter-spacing: 0.2px;
+    }
+
+    .controls {
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 16px;
+      align-items: end;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field label,
+    .radio-group > span {
+      font-size: 14px;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    select,
+    input[type="number"] {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(104, 168, 255, 0.28);
+      background: linear-gradient(180deg, rgba(18, 29, 48, 0.95), rgba(12, 22, 39, 0.95));
+      color: var(--text);
+      outline: none;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+    }
+
+    select:focus,
+    input[type="number"]:focus {
+      border-color: rgba(95, 176, 255, 0.75);
+      box-shadow: 0 0 0 3px rgba(95, 176, 255, 0.15);
+    }
+
+    .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .radio-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .radio-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(104, 168, 255, 0.24);
+      background: rgba(10, 19, 33, 0.65);
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .radio-chip input {
+      accent-color: var(--accent);
+    }
+
+    .submit-wrap {
+      display: flex;
+      align-items: end;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 13px 18px;
+      border: 1px solid rgba(108, 175, 255, 0.3);
+      border-radius: 12px;
+      background:
+        linear-gradient(180deg, rgba(86, 160, 255, 0.28), rgba(44, 103, 198, 0.30)),
+        linear-gradient(180deg, rgba(17, 31, 52, 0.95), rgba(12, 22, 38, 0.95));
+      color: #eef6ff;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(38, 100, 204, 0.2);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(120, 185, 255, 0.55);
+      box-shadow: 0 16px 30px rgba(38, 100, 204, 0.28);
+    }
+
+    .btn[disabled] {
+      opacity: 0.45;
+      cursor: default;
+      transform: none;
+      box-shadow: 0 10px 25px rgba(38, 100, 204, 0.1);
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1.6fr 1.05fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .chart-area {
+      min-height: 360px;
+      padding: 14px 16px 18px;
+    }
+
+    .chart-box {
+      min-height: 290px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background:
+        linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px) 0 0 / 100% 58px,
+        linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px) 0 0 / 120px 100%,
+        radial-gradient(circle at 30% 40%, rgba(87, 149, 255, 0.10), transparent 30%),
+        linear-gradient(180deg, rgba(12, 23, 39, 0.9), rgba(10, 18, 31, 0.96));
+      position: relative;
+      overflow: auto;
+      padding: 18px;
+    }
+
+    .summary-list {
+      display: grid;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .summary-item {
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 18px;
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 14px;
+      flex-wrap: wrap;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+    }
+
+    .metrics {
+      display: grid;
+      gap: 14px;
+    }
+
+    .metric-card {
+      padding: 18px;
+      min-height: 108px;
+    }
+
+    .metric-title {
+      color: #f0f4fb;
+      font-size: 16px;
+      margin-bottom: 16px;
+    }
+
+    .metric-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--green);
+      line-height: 1.1;
+    }
+
+    .metric-sub {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .accel-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 12px;
+      padding: 16px;
+    }
+
+    .accel-card {
+      padding: 16px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .accel-name {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--accent-2);
+      margin-bottom: 8px;
+    }
+
+    .accel-value {
+      font-size: 26px;
+      font-weight: 700;
+      color: #f2f6ff;
+    }
+
+    .accel-sub {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .table-panel {
+      padding: 0;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      padding: 0 16px 16px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1450px;
+    }
+
+    thead th {
+      text-align: left;
+      font-size: 14px;
+      font-weight: 600;
+      color: #f3f7ff;
+      padding: 14px 12px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tbody td {
+      padding: 14px 12px;
+      color: var(--muted);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 14px;
+      vertical-align: top;
+    }
+
+    tbody tr:hover {
+      background: rgba(255,255,255,0.03);
+    }
+
+    .footer-panel {
+      padding: 14px 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .title {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .link {
+      color: var(--accent-2);
+      text-decoration: none;
+    }
+
+    .link:hover {
+      text-decoration: underline;
+    }
+
+    .status-ok { color: var(--green); font-weight: 600; }
+    .status-failed { color: var(--red); font-weight: 600; }
+    .status-unknown { color: var(--yellow); font-weight: 600; }
+    .speed-fast { color: var(--green); font-weight: 700; }
+    .speed-slow { color: var(--yellow); font-weight: 700; }
+
+    .muted { color: var(--muted); }
+
+    .loading,
+    .error-box,
+    .empty-box {
+      padding: 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      color: #d5e5ff;
+    }
+
+    @media (max-width: 1100px) {
+      .controls-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .controls-grid {
+        grid-template-columns: 1fr;
+      }
+      .container {
+        width: min(100% - 18px, 1400px);
+      }
+      .title {
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="title-block">
+        <div class="title">MadGraph Benchmark Dashboard</div>
+        <div class="subtitle">Comparing backends by acceleration relative to FORTRAN.</div>
+      </div>
+      <a class="link" href="/mgbench/cgi-bin/list.py">Recent requests</a>
+    </div>
+
+    <form class="panel controls" action="/mgbench/cgi-bin/submit.py" method="post">
+      <div class="panel-header">Simulation &amp; Hardware Controls</div>
+
+      <div class="controls-grid" style="padding-top:16px;">
+        <div class="field">
+          <label for="process">Physics Process</label>
+          <select name="process" id="process">
+            <option value="DY">DY</option>
+            <option value="TT">TT</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="jets">Jet Multiplicity</label>
+          <select name="jets" id="jets">
+            <option value="0">0J</option>
+            <option value="1">1J</option>
+            <option value="2">2J</option>
+            <option value="3">3J</option>
+            <option value="3_simplified">3J (Simplified)</option>
+            <option value="4_simplified">4J (Simplified)</option>
+          </select>
+        </div>
+
+        <div class="field radio-group">
+          <span>Mode</span>
+          <div class="radio-options">
+            <label class="radio-chip">
+              <input type="radio" name="mode" value="inclusive" checked>
+              Inclusive
+            </label>
+            <label class="radio-chip">
+              <input type="radio" name="mode" value="exclusive">
+              Exclusive
+            </label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="version">MadGraph Version</label>
+          <select name="version" id="version">
+            <option value="3.6.4">3.6.4</option>
+            <option value="3.6.5">3.6.5</option>
+            <option value="3.6.6">3.6.6</option>
+            <option value="3.6.7_stable">3.6.7 (stable)</option>
+            <option value="3.6.7_dev">3.6.7 (dev)</option>
+            <option value="3.7.0">3.7.0</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="backend">Backend</label>
+          <select name="backend" id="backend">
+            <option value="fortran">FORTRAN</option>
+            <option value="cppnone">CPPNONE</option>
+            <option value="cppavx2">CPPAVX2</option>
+            <option value="cpp512y">CPP512Y</option>
+            <option value="cpp512z">CPP512Z</option>
+            <option value="cuda" selected>CUDA</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="nevt">Events</label>
+          <input type="number" id="nevt" name="nevt" value="1000" min="100" max="500000">
+        </div>
+
+        <div class="submit-wrap">
+          <button class="btn" type="submit">Submit Benchmark</button>
+        </div>
+      </div>
+    </form>
+
+    <div class="panel controls" style="margin-bottom:16px;">
+      <div class="panel-header">Dataset Filters</div>
+      <div class="controls-grid" style="padding-top:16px;">
+        <div class="field">
+          <label for="filter-process">Process</label>
+          <select id="filter-process"></select>
+        </div>
+        <div class="field">
+          <label for="filter-backend">Backend</label>
+          <select id="filter-backend"></select>
+        </div>
+        <div class="field">
+          <label for="filter-jets">Jets</label>
+          <select id="filter-jets"></select>
+        </div>
+        <div class="field">
+          <label for="filter-mg">MadGraph</label>
+          <select id="filter-mg"></select>
+        </div>
+        <div class="field">
+          <label for="filter-athena">Athena</label>
+          <select id="filter-athena"></select>
+        </div>
+        <div class="field">
+          <label for="filter-patch">Patch</label>
+          <select id="filter-patch"></select>
+        </div>
+        <div class="field" style="grid-column: span 3;">
+          <label for="filter-combo">MG + Athena + Patch Combo</label>
+          <select id="filter-combo"></select>
+        </div>
+        <div class="field" style="grid-column: span 2;">
+          <label>Current filtered JSON</label>
+          <a id="current-json-link" class="btn" target="_blank" href="#">Open filtered JSON</a>
+        </div>
+        <div class="field submit-wrap">
+          <button id="clear-filters" class="btn" type="button">Clear Filters</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard">
+      <div class="panel chart-area">
+        <div class="panel-header">Live Dataset Summary</div>
+        <div class="chart-box">
+          <div id="summary-list" class="summary-list">
+            <div class="loading">Loading benchmark summary…</div>
+          </div>
+        </div>
+        <div class="chart-legend">
+          <div><span class="dot" style="background:#61d17f;"></span>Successful runs</div>
+          <div><span class="dot" style="background:#ff7b91;"></span>Failed runs</div>
+          <div><span class="dot" style="background:#5fb0ff;"></span>Acceleration uses median FORTRAN wall time for comparable runs</div>
+        </div>
+      </div>
+
+      <div class="metrics">
+        <div class="panel metric-card">
+          <div class="metric-title">Filtered Runs</div>
+          <div id="metric-total-runs" class="metric-value">—</div>
+          <div class="metric-sub">rows currently matching your filters</div>
+        </div>
+
+        <div class="panel metric-card">
+          <div class="metric-title">Best Acceleration</div>
+          <div id="metric-best-accel" class="metric-value">—</div>
+          <div id="metric-best-accel-sub" class="metric-sub">best backend speedup vs FORTRAN</div>
+        </div>
+
+        <div class="panel metric-card">
+          <div class="metric-title">Latest MG Version</div>
+          <div id="metric-latest-mg" class="metric-value" style="font-size:22px;">—</div>
+          <div id="metric-latest-mg-sub" class="metric-sub">latest run in dataset</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel table-panel">
+      <div class="panel-header">Acceleration Summary by Backend</div>
+      <div id="accel-grid" class="accel-grid">
+        <div class="loading">Loading backend acceleration summary…</div>
+      </div>
+    </div>
+
+    <div class="panel table-panel">
+      <div class="panel-header">Performance Breakdown</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Process</th>
+              <th>Jets</th>
+              <th>Mode</th>
+              <th>Backend</th>
+              <th>MG</th>
+              <th>Athena</th>
+              <th>Wall Time (s)</th>
+              <th>Accel. vs FORTRAN</th>
+              <th>FORTRAN Ref. (s)</th>
+              <th>Throughput</th>
+              <th>ME Evals/s</th>
+              <th>GPU</th>
+              <th>CPU</th>
+              <th>Node</th>
+              <th>Patch</th>
+              <th>Run ID</th>
+            </tr>
+          </thead>
+          <tbody id="results-body">
+            <tr><td colspan="18" class="loading">Loading benchmark rows…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel footer-panel pagination" id="pagination">
+      <span class="muted">Loading pages…</span>
+    </div>
+
+    <div class="panel footer-panel" id="footer-text">
+      Configuration details: cached benchmark scan · MANUAL_BENCHMARK_PATCHED · 50 rows per page · acceleration normalized to comparable FORTRAN rows
+    </div>
+  </div>
+
+  <script>
+    const RESULTS_URL = "/mgbench/cgi-bin/results.py";
+    const PAGE_SIZE = 50;
+
+    let allRows = [];
+    let filteredRows = [];
+    let currentPage = 1;
+    let currentBlobUrl = null;
+
+    function fmt(value, fallback = "—") {
+      if (value === null || value === undefined || value === "") return fallback;
+      return String(value);
+    }
+
+    function fmtNum(value, digits = 2, fallback = "—") {
+      if (value === null || value === undefined || value === "" || Number.isNaN(Number(value))) {
+        return fallback;
+      }
+      return Number(value).toLocaleString(undefined, {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+      });
+    }
+
+    function statusClass(status) {
+      if (status === "ok") return "status-ok";
+      if (status === "failed") return "status-failed";
+      return "status-unknown";
+    }
+
+    function inferBackend(row) {
+      const raw = [
+        row.backend,
+        row.raw_csv?.backend_label,
+        row.raw_csv?.backend_requested,
+        row.raw_csv?.backend_used,
+        row.raw_csv?.jo_dir,
+        row.raw_csv?.outtag,
+        row.log_generate_path,
+        row.csv_path,
+      ].filter(Boolean).join(" ").toLowerCase();
+
+      if (raw.includes("cpp512y")) return "cpp512y";
+      if (raw.includes("cpp512z")) return "cpp512z";
+      if (
+        raw.includes("using 'cuda' matrix elements") ||
+        raw.includes("madevent_gpu") ||
+        raw.includes("_gpu") ||
+        raw.includes(".gpu.") ||
+        raw.includes(" cuda") ||
+        raw === "gpu"
+      ) return "cuda";
+      if (raw.includes("cppavx2") || raw.includes(" avx2")) return "cppavx2";
+      if (raw.includes("cppnone")) return "cppnone";
+      if (raw.includes("fortran")) return "fortran";
+      return row.backend || "unknown";
+    }
+
+    function inferJets(row) {
+      if (row.jets !== null && row.jets !== undefined && row.jets !== "") {
+        return String(row.jets);
+      }
+
+      const text = [
+        row.raw_csv?.jo_dir,
+        row.raw_csv?.outtag,
+        row.csv_path,
+        row.log_generate_path
+      ].filter(Boolean).join(" ");
+
+      const m = text.match(/_(\d+)(?:to(\d+))?J\b/i);
+      if (!m) return "—";
+      if (m[2]) return String(m[2]);
+      return String(m[1]);
+    }
+
+    function getPatchLabel(row) {
+      return row.patch_shadow ? "shadow" : "none";
+    }
+
+    function getAthenaCombo(row) {
+      const mg = row.madgraph_version || "unknown";
+      const ath = row.athena_version || "unknown";
+      const patch = row.patch_shadow ? "shadow" : "no-shadow";
+      return `${mg} | ${ath} | ${patch}`;
+    }
+
+    function uniqueSorted(values) {
+      return [...new Set(values.filter(v => v !== null && v !== undefined && v !== ""))].sort();
+    }
+
+    function populateSelect(id, values) {
+      const el = document.getElementById(id);
+      const current = el.value;
+      const options = [`<option value="">All</option>`];
+
+      for (const value of values) {
+        const safe = String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        options.push(`<option value="${safe}">${safe}</option>`);
+      }
+
+      el.innerHTML = options.join("");
+      if ([...el.options].some(o => o.value === current)) {
+        el.value = current;
+      }
+    }
+
+    function buildFilterOptions(rows) {
+      populateSelect("filter-process", uniqueSorted(rows.map(r => r.process || "unknown")));
+      populateSelect("filter-backend", uniqueSorted(rows.map(r => inferBackend(r))));
+      populateSelect("filter-jets", uniqueSorted(rows.map(r => inferJets(r))));
+      populateSelect("filter-mg", uniqueSorted(rows.map(r => r.madgraph_version || "unknown")));
+      populateSelect("filter-athena", uniqueSorted(rows.map(r => r.athena_version || "unknown")));
+      populateSelect("filter-patch", uniqueSorted(rows.map(r => getPatchLabel(r))));
+      populateSelect("filter-combo", uniqueSorted(rows.map(r => getAthenaCombo(r))));
+    }
+
+    function getCurrentFilters() {
+      return {
+        process: document.getElementById("filter-process").value,
+        backend: document.getElementById("filter-backend").value,
+        jets: document.getElementById("filter-jets").value,
+        mg: document.getElementById("filter-mg").value,
+        athena: document.getElementById("filter-athena").value,
+        patch: document.getElementById("filter-patch").value,
+        combo: document.getElementById("filter-combo").value,
+      };
+    }
+
+    function rowGroupKey(row) {
+      return [
+        row.process || "unknown",
+        inferJets(row),
+        row.mode || "unknown",
+        row.madgraph_version || "unknown",
+        row.athena_version || "unknown",
+        getPatchLabel(row)
+      ].join("||");
+    }
+
+    function getComparableBaselineRows(groupKey) {
+      return allRows.filter(r => {
+        return r.status === "ok" &&
+               inferBackend(r) === "fortran" &&
+               rowGroupKey(r) === groupKey &&
+               r.wall_s !== null && r.wall_s !== undefined && r.wall_s !== "" && !Number.isNaN(Number(r.wall_s));
+      });
+    }
+
+    function median(values) {
+      if (!values.length) return null;
+      const sorted = [...values].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      if (sorted.length % 2 === 0) return (sorted[mid - 1] + sorted[mid]) / 2;
+      return sorted[mid];
+    }
+
+    function getBaselineWall(row) {
+      const refs = getComparableBaselineRows(rowGroupKey(row)).map(r => Number(r.wall_s));
+      return median(refs);
+    }
+
+    function getAcceleration(row) {
+      if (row.status !== "ok") return null;
+      if (row.wall_s === null || row.wall_s === undefined || row.wall_s === "" || Number.isNaN(Number(row.wall_s))) return null;
+      const baseline = getBaselineWall(row);
+      if (baseline === null) return null;
+      return baseline / Number(row.wall_s);
+    }
+
+    function formatAccel(value) {
+      if (value === null || value === undefined || !Number.isFinite(value)) return "—";
+      return `${fmtNum(value, 2)}×`;
+    }
+
+    function formatAccelLabel(value) {
+      if (value === null || value === undefined || !Number.isFinite(value)) return "no FORTRAN reference";
+      if (Math.abs(value - 1) < 0.02) return "about equal to FORTRAN";
+      if (value > 1) return `${fmtNum(value, 2)}× faster than FORTRAN`;
+      return `${fmtNum(1 / value, 2)}× slower than FORTRAN`;
+    }
+
+    function accelClass(value) {
+      if (value === null || value === undefined || !Number.isFinite(value)) return "muted";
+      return value >= 1 ? "speed-fast" : "speed-slow";
+    }
+
+    function updateJsonLink() {
+      const link = document.getElementById("current-json-link");
+      if (currentBlobUrl) {
+        URL.revokeObjectURL(currentBlobUrl);
+      }
+      currentBlobUrl = URL.createObjectURL(
+        new Blob([JSON.stringify(filteredRows, null, 2)], { type: "application/json" })
+      );
+      link.href = currentBlobUrl;
+    }
+
+    function applyFilters() {
+      const f = getCurrentFilters();
+
+      filteredRows = allRows.filter(row => {
+        const process = row.process || "unknown";
+        const backend = inferBackend(row);
+        const jets = inferJets(row);
+        const mg = row.madgraph_version || "unknown";
+        const athena = row.athena_version || "unknown";
+        const patch = getPatchLabel(row);
+        const combo = getAthenaCombo(row);
+
+        if (f.process && process !== f.process) return false;
+        if (f.backend && backend !== f.backend) return false;
+        if (f.jets && jets !== f.jets) return false;
+        if (f.mg && mg !== f.mg) return false;
+        if (f.athena && athena !== f.athena) return false;
+        if (f.patch && patch !== f.patch) return false;
+        if (f.combo && combo !== f.combo) return false;
+        return true;
+      });
+
+      currentPage = 1;
+      renderAll();
+      updateJsonLink();
+    }
+
+    function clearFilters() {
+      [
+        "filter-process",
+        "filter-backend",
+        "filter-jets",
+        "filter-mg",
+        "filter-athena",
+        "filter-patch",
+        "filter-combo"
+      ].forEach(id => {
+        document.getElementById(id).value = "";
+      });
+      applyFilters();
+    }
+
+    function renderSummary(rows) {
+      const el = document.getElementById("summary-list");
+
+      if (!rows.length) {
+        el.innerHTML = `<div class="empty-box">No benchmark rows found.</div>`;
+        return;
+      }
+
+      const okCount = rows.filter(r => r.status === "ok").length;
+      const failCount = rows.filter(r => r.status === "failed").length;
+      const patchCount = rows.filter(r => r.patch_shadow).length;
+      const accelRows = rows.map(r => getAcceleration(r)).filter(v => v !== null);
+      const comparableGroups = new Set(rows.map(r => rowGroupKey(r)).filter(key => getComparableBaselineRows(key).length > 0)).size;
+
+      const backendCounts = {};
+      for (const row of rows) {
+        const b = inferBackend(row);
+        backendCounts[b] = (backendCounts[b] || 0) + 1;
+      }
+
+      const backendSummary = Object.entries(backendCounts)
+        .sort((a, b) => b[1] - a[1])
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(" · ");
+
+      el.innerHTML = `
+        <div class="summary-item"><strong>Total filtered runs:</strong> ${rows.length}</div>
+        <div class="summary-item"><strong>Successful:</strong> ${okCount} &nbsp; <strong>Failed:</strong> ${failCount}</div>
+        <div class="summary-item"><strong>Comparable groups with FORTRAN baseline:</strong> ${comparableGroups}</div>
+        <div class="summary-item"><strong>Median acceleration in current filter:</strong> ${accelRows.length ? formatAccel(median(accelRows)) : "—"}</div>
+        <div class="summary-item"><strong>Rows with shadow patch signal:</strong> ${patchCount}</div>
+        <div class="summary-item"><strong>Backend mix:</strong> ${backendSummary || "—"}</div>
+      `;
+    }
+
+    function renderMetrics(rows) {
+      document.getElementById("metric-total-runs").textContent = rows.length.toLocaleString();
+
+      const accelEntries = rows
+        .map(r => ({ row: r, accel: getAcceleration(r) }))
+        .filter(x => x.accel !== null);
+
+      if (accelEntries.length) {
+        accelEntries.sort((a, b) => b.accel - a.accel);
+        const best = accelEntries[0];
+        document.getElementById("metric-best-accel").textContent = formatAccel(best.accel);
+        document.getElementById("metric-best-accel-sub").textContent =
+          `${inferBackend(best.row)} on ${fmt(best.row.process)} ${inferJets(best.row)}J · ${best.row.mode || "—"}`;
+      } else {
+        document.getElementById("metric-best-accel").textContent = "—";
+        document.getElementById("metric-best-accel-sub").textContent = "best backend speedup vs FORTRAN";
+      }
+
+      const latest = rows[0];
+      document.getElementById("metric-latest-mg").textContent = latest ? fmt(latest.madgraph_version) : "—";
+      document.getElementById("metric-latest-mg-sub").textContent =
+        latest ? `latest row: ${fmt(latest.process)} ${inferJets(latest)}J · ${inferBackend(latest)}` : "latest run in dataset";
+    }
+
+    function renderAccelerationCards(rows) {
+      const el = document.getElementById("accel-grid");
+      if (!rows.length) {
+        el.innerHTML = `<div class="empty-box">No benchmark rows found.</div>`;
+        return;
+      }
+
+      const byBackend = new Map();
+      for (const row of rows) {
+        const backend = inferBackend(row);
+        if (!byBackend.has(backend)) byBackend.set(backend, []);
+        byBackend.get(backend).push(row);
+      }
+
+      const cards = [...byBackend.entries()].map(([backend, backendRows]) => {
+        const accels = backendRows.map(r => getAcceleration(r)).filter(v => v !== null);
+        const wallVals = backendRows
+          .filter(r => r.status === "ok" && r.wall_s !== null && r.wall_s !== undefined && r.wall_s !== "" && !Number.isNaN(Number(r.wall_s)))
+          .map(r => Number(r.wall_s));
+
+        const medAccel = accels.length ? median(accels) : null;
+        const medWall = wallVals.length ? median(wallVals) : null;
+        const baselineCoverage = backendRows.filter(r => getBaselineWall(r) !== null).length;
+
+        return {
+          backend,
+          medAccel,
+          medWall,
+          count: backendRows.length,
+          comparable: baselineCoverage,
+        };
+      }).sort((a, b) => {
+        const av = a.medAccel ?? -Infinity;
+        const bv = b.medAccel ?? -Infinity;
+        return bv - av;
+      });
+
+      el.innerHTML = cards.map(card => `
+        <div class="accel-card">
+          <div class="accel-name">${card.backend}</div>
+          <div class="accel-value ${accelClass(card.medAccel)}">${card.backend === "fortran" ? "1.00×" : formatAccel(card.medAccel)}</div>
+          <div class="accel-sub">
+            median wall: ${card.medWall !== null ? fmtNum(card.medWall, 2) + " s" : "—"}<br>
+            rows: ${card.count} · comparable to FORTRAN: ${card.comparable}<br>
+            ${card.backend === "fortran" ? "baseline backend" : formatAccelLabel(card.medAccel)}
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderTable(rows) {
+      const tbody = document.getElementById("results-body");
+
+      if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="18" class="empty-box">No rows found.</td></tr>`;
+        renderPagination(0);
+        return;
+      }
+
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const pageRows = rows.slice(start, start + PAGE_SIZE);
+
+      tbody.innerHTML = pageRows.map(row => {
+        const accel = getAcceleration(row);
+        const baseline = getBaselineWall(row);
+        return `
+          <tr>
+            <td class="${statusClass(row.status)}">${fmt(row.status)}</td>
+            <td>${fmt(row.created)}</td>
+            <td>${fmt(row.process)}</td>
+            <td>${fmt(inferJets(row))}</td>
+            <td>${fmt(row.mode)}</td>
+            <td>${fmt(inferBackend(row))}</td>
+            <td>${fmt(row.madgraph_version)}</td>
+            <td>${fmt(row.athena_version)}</td>
+            <td>${fmtNum(row.wall_s, 2)}</td>
+            <td class="${accelClass(accel)}">${inferBackend(row) === "fortran" && baseline !== null ? "1.00×" : formatAccel(accel)}</td>
+            <td>${fmtNum(baseline, 2)}</td>
+            <td>${fmtNum(row.throughput ?? row.raw_csv?.evt_per_s_generate ?? row.raw_csv?.evt_per_s_shell, 2)}</td>
+            <td>${fmtNum(row.me_evals_sec, 2)}</td>
+            <td>${fmt(row.gpu_name)}</td>
+            <td>${fmt(row.cpu_name)}</td>
+            <td>${fmt(row.node)}</td>
+            <td>${row.patch_shadow ? "shadow" : "—"}</td>
+            <td><code>${fmt(row.run_id)}</code></td>
+          </tr>
+        `;
+      }).join("");
+
+      renderPagination(rows.length);
+    }
+
+    function renderPagination(totalRows) {
+      const totalPages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
+      const el = document.getElementById("pagination");
+
+      el.innerHTML = `
+        <button class="btn" style="width:auto;padding:8px 14px;" ${currentPage <= 1 ? "disabled" : ""} onclick="prevPage()">Prev</button>
+        <span class="muted">Page ${totalRows ? currentPage : 0} of ${totalRows ? totalPages : 0} · ${totalRows} rows · 50 per page</span>
+        <button class="btn" style="width:auto;padding:8px 14px;" ${currentPage >= totalPages ? "disabled" : ""} onclick="nextPage()">Next</button>
+      `;
+    }
+
+    function renderAll() {
+      renderSummary(filteredRows);
+      renderMetrics(filteredRows);
+      renderAccelerationCards(filteredRows);
+      renderTable(filteredRows);
+    }
+
+    function prevPage() {
+      if (currentPage > 1) {
+        currentPage -= 1;
+        renderTable(filteredRows);
+        window.scrollTo({ top: document.querySelector(".table-panel").offsetTop - 20, behavior: "smooth" });
+      }
+    }
+
+    function nextPage() {
+      const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
+      if (currentPage < totalPages) {
+        currentPage += 1;
+        renderTable(filteredRows);
+        window.scrollTo({ top: document.querySelector(".table-panel").offsetTop - 20, behavior: "smooth" });
+      }
+    }
+
+    async function loadResults() {
+      const tbody = document.getElementById("results-body");
+      try {
+        const res = await fetch(RESULTS_URL, { cache: "no-store" });
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        if (!Array.isArray(data)) {
+          throw new Error(data.error || "results endpoint did not return an array");
+        }
+
+        allRows = data;
+        buildFilterOptions(allRows);
+        filteredRows = [...allRows];
+        renderAll();
+        updateJsonLink();
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="18" class="error-box">Failed to load results: ${String(err.message || err)}</td></tr>`;
+        document.getElementById("summary-list").innerHTML =
+          `<div class="error-box">Failed to load summary: ${String(err.message || err)}</div>`;
+        document.getElementById("accel-grid").innerHTML =
+          `<div class="error-box">Failed to load acceleration summary: ${String(err.message || err)}</div>`;
+        document.getElementById("pagination").innerHTML = `<span class="error-box">Pagination unavailable.</span>`;
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      [
+        "filter-process",
+        "filter-backend",
+        "filter-jets",
+        "filter-mg",
+        "filter-athena",
+        "filter-patch",
+        "filter-combo"
+      ].forEach(id => {
+        document.getElementById(id).addEventListener("change", applyFilters);
+      });
+
+      document.getElementById("clear-filters").addEventListener("click", clearFilters);
+      loadResults();
+    });
+
+    window.prevPage = prevPage;
+    window.nextPage = nextPage;
+  </script>
+</body>
+</html>

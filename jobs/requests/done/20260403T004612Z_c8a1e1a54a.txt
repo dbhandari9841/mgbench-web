@@ -1,0 +1,8 @@
+request_id="20260403T004612Z_c8a1e1a54a"
+process="TT"
+jets="0"
+mode="inclusive"
+version="3.6.7_dev"
+backend="cuda"
+nevt="1000"
+card_key="tt_0j_inclusive"

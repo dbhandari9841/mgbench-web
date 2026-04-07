@@ -1,0 +1,5 @@
+{
+  "request_id": "20260402T151812Z_2b2c3f30df",
+  "state": "submit_failed",
+  "error": "/eos/user/d/dbhandar/www/mgbench/bin/process_requests.sh: line 191: /usr/bin/condor_submit: No such file or directory"
+}

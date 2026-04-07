@@ -1,0 +1,8 @@
+request_id="20260403T020547Z_9e678fbcd9"
+process="TT"
+jets="2"
+mode="inclusive"
+version="3.6.7_dev"
+backend="fortran"
+nevt="1000"
+card_key="tt_2j_inclusive"

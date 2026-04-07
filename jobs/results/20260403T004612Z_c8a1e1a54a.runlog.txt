@@ -1,0 +1,15 @@
+REQID=20260403T004612Z_c8a1e1a54a
+CARD_A=input_card_a_cuda.txt
+HOST=b9g57n6574.cern.ch
+START=Fri Apr  3 03:01:08 AM CEST 2026
+PWD=/pool/condor/dir_2007090
+FILES IN SCRATCH:
+total 16
+-rw-r--r--. 1 dbhandar zp    0 Apr  3 03:01 _condor_stderr
+-rw-r--r--. 1 dbhandar zp    0 Apr  3 03:01 _condor_stdout
+-rw-------. 1 dbhandar zp 4994 Apr  3 03:01 dbhandar.cc
+-rw-r--r--. 1 dbhandar zp  152 Apr  3 03:01 input_card_a_cuda.txt
+-rwxr-xr-x. 1 dbhandar zp  956 Apr  3 03:01 run_mgbench_one_backend.sh
+drwx------. 2 dbhandar zp    6 Apr  3 03:01 srv
+drwx------. 2 dbhandar zp    6 Apr  3 03:01 tmp
+drwx------. 3 dbhandar zp   17 Apr  3 03:01 var

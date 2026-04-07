@@ -1,0 +1,12 @@
+{
+  "request_id": "20260401T181228Z_aa99572554",
+  "state": "done",
+  "process": "DY",
+  "jets": "0",
+  "mode": "inclusive",
+  "version": "3.6.7_dev",
+  "backend": "cuda",
+  "nevt": 1000,
+  "card_key": "dy_0j_inclusive",
+  "wall_s": 15
+}

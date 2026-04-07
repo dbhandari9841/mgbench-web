@@ -1,0 +1,5 @@
+{
+  "request_id": "20260403T003054Z_aacbff842b",
+  "state": "submit_failed",
+  "error": "Missing required input file: /afs/cern.ch/user/d/dbhandar/mgbench/cards/3.6.7_dev/tt_0j_inclusive/input_card_a_cuda.txt"
+}

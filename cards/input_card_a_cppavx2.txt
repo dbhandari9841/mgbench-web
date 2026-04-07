@@ -1,0 +1,8 @@
+import model sm-no_b_mass
+define ell+ = e+ mu+ ta+
+define ell- = e- mu- ta-
+
+generate p p > ell+ ell- @0
+add process p p > ell+ ell- j @1
+add process p p > ell+ ell- j j @2
+output madevent_simd pp_DY_2j_cppavx2_gridpack.mad --hel_recycling=False

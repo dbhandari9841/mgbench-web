@@ -1,0 +1,8 @@
+request_id="20260402T150222Z_c39960d85b"
+process="DY"
+jets="3"
+mode="exclusive"
+version="3.6.7_dev"
+backend="cuda"
+nevt="1000"
+card_key="dy_3j_exclusive"

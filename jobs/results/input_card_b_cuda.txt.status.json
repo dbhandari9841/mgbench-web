@@ -1,0 +1,7 @@
+{
+  "request_id": "input_card_b_cuda.txt",
+  "state": "done",
+  "card_a": "input_card_a_cuda.txt",
+  "wall_s": 20,
+  "host": "b9g57n3815.cern.ch"
+}

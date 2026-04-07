@@ -1,0 +1,15 @@
+{
+  "request_id": "20260403T020547Z_9e678fbcd9",
+  "state": "submitted",
+  "cluster_id": "5195350",
+  "process": "TT",
+  "jets": "2",
+  "mode": "inclusive",
+  "version": "3.6.7_dev",
+  "backend": "fortran",
+  "nevt": 1000,
+  "card_key": "tt_2j_inclusive",
+  "card_a": "input_card_a_fortran.txt",
+  "card_b": "input_card_b_fortran.txt",
+  "timed_phase": "card_b"
+}

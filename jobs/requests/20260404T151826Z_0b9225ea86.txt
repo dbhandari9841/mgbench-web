@@ -1,0 +1,8 @@
+request_id="20260404T151826Z_0b9225ea86"
+process="DY"
+jets="0"
+mode="inclusive"
+version="3.6.7_stable"
+backend="cuda"
+nevt="1000"
+card_key="dy_0j_inclusive"

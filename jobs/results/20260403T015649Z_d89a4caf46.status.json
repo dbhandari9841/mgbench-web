@@ -1,0 +1,15 @@
+{
+  "request_id": "20260403T015649Z_d89a4caf46",
+  "state": "submitted",
+  "cluster_id": "5195349",
+  "process": "TT",
+  "jets": "0",
+  "mode": "inclusive",
+  "version": "3.6.7_dev",
+  "backend": "cuda",
+  "nevt": 1000,
+  "card_key": "tt_0j_inclusive",
+  "card_a": "input_card_a_cuda.txt",
+  "card_b": "input_card_b_cuda.txt",
+  "timed_phase": "card_b"
+}

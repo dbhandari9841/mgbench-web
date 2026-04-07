@@ -1,0 +1,16 @@
+REQID=input_card_b_fortran.txt
+CARD_A=input_card_a_fortran.txt
+HOST=b9p34p1035.cern.ch
+START=Fri Apr  3 04:06:28 AM CEST 2026
+PWD=/pool/condor/dir_3722850
+FILES IN SCRATCH:
+total 20
+-rw-r--r--. 1 dbhandar zp    0 Apr  3 04:06 _condor_stderr
+-rw-r--r--. 1 dbhandar zp    0 Apr  3 04:06 _condor_stdout
+-rw-------. 1 dbhandar zp 4994 Apr  3 04:06 dbhandar.cc
+-rw-r--r--. 1 dbhandar zp  211 Apr  3 04:06 input_card_a_fortran.txt
+-rw-r--r--. 1 dbhandar zp   90 Apr  3 04:06 input_card_b_fortran.txt
+-rwxr-xr-x. 1 dbhandar zp  956 Apr  3 04:06 run_mgbench_one_backend.sh
+drwx------. 2 dbhandar zp    6 Apr  3 04:06 srv
+drwx------. 2 dbhandar zp    6 Apr  3 04:06 tmp
+drwx------. 3 dbhandar zp   25 Apr  3 04:06 var
