@@ -306,7 +306,7 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 1450px;
+      min-width: 1560px;
     }
 
     thead th {
@@ -432,7 +432,7 @@
     <div class="topbar">
       <div class="title-block">
         <div class="title">MadGraph Benchmark Dashboard</div>
-        <div class="subtitle">Comparing backends by acceleration relative to FORTRAN.</div>
+        <div class="subtitle">Comparing backends by acceleration relative to FORTRAN, split across Athena/manual and standalone scans.</div>
       </div>
       <a class="link" href="/mgbench/cgi-bin/list.py">Recent requests</a>
     </div>
@@ -513,6 +513,10 @@
     <div class="panel controls" style="margin-bottom:16px;">
       <div class="panel-header">Dataset Filters</div>
       <div class="controls-grid" style="padding-top:16px;">
+        <div class="field">
+          <label for="filter-source">Source</label>
+          <select id="filter-source"></select>
+        </div>
         <div class="field">
           <label for="filter-process">Process</label>
           <select id="filter-process"></select>
@@ -602,6 +606,7 @@
             <tr>
               <th>Status</th>
               <th>Created</th>
+              <th>Source</th>
               <th>Process</th>
               <th>Jets</th>
               <th>Mode</th>
@@ -621,7 +626,7 @@
             </tr>
           </thead>
           <tbody id="results-body">
-            <tr><td colspan="18" class="loading">Loading benchmark rows…</td></tr>
+            <tr><td colspan="19" class="loading">Loading benchmark rows…</td></tr>
           </tbody>
         </table>
       </div>
@@ -632,7 +637,7 @@
     </div>
 
     <div class="panel footer-panel" id="footer-text">
-      Configuration details: cached benchmark scan · MANUAL_BENCHMARK_PATCHED · 50 rows per page · acceleration normalized to comparable FORTRAN rows
+      Configuration details: combined cached benchmark scan · 50 rows per page · acceleration normalized to comparable FORTRAN rows within the same source family
     </div>
   </div>
 
@@ -666,6 +671,21 @@
       return "status-unknown";
     }
 
+    function normalizeSource(row) {
+      const src = String(row.source || "").trim().toLowerCase();
+      if (src === "standalone_mg_benchmark") return "standalone";
+      if (src === "manual_benchmark_patched") return "athena_manual";
+      if (src === "standalone" || src === "athena_manual") return src;
+      return "unknown";
+    }
+
+    function getSourceLabel(row) {
+      const src = normalizeSource(row);
+      if (src === "standalone") return "Standalone";
+      if (src === "athena_manual") return "Athena/manual";
+      return "Unknown";
+    }
+
     function inferBackend(row) {
       const raw = [
         row.backend,
@@ -695,21 +715,51 @@
     }
 
     function inferJets(row) {
-      if (row.jets !== null && row.jets !== undefined && row.jets !== "") {
-        return String(row.jets);
+      const directCandidates = [
+        row.jets,
+        row.raw_csv?.jets,
+        row.raw_csv?.njet,
+        row.raw_csv?.njets,
+      ];
+
+      for (const candidate of directCandidates) {
+        if (candidate !== null && candidate !== undefined && candidate !== "") {
+          const s = String(candidate).trim();
+          const num = s.match(/^(\d+)$/);
+          if (num) return num[1];
+
+          const range = s.match(/^(\d+)\s*to\s*(\d+)$/i);
+          if (range) return range[2];
+
+          const jetLabel = s.match(/(\d+)(?:\s*to\s*(\d+))?\s*j/i);
+          if (jetLabel) return jetLabel[2] || jetLabel[1];
+        }
       }
 
-      const text = [
+      const haystack = [
         row.raw_csv?.jo_dir,
         row.raw_csv?.outtag,
+        row.raw_csv?.process,
+        row.raw_csv?.proc,
+        row.raw_csv?.process_name,
         row.csv_path,
-        row.log_generate_path
+        row.log_generate_path,
+        row.run_id,
       ].filter(Boolean).join(" ");
 
-      const m = text.match(/_(\d+)(?:to(\d+))?J\b/i);
-      if (!m) return "—";
-      if (m[2]) return String(m[2]);
-      return String(m[1]);
+      const patterns = [
+        /(?:^|[^\d])(\d+)\s*to\s*(\d+)\s*j(?:[^a-z0-9]|$)/i,
+        /(?:^|[^\d])(\d+)to(\d+)j(?:[^a-z0-9]|$)/i,
+        /(?:^|[^\d])(\d+)j(?:[^a-z0-9]|$)/i,
+        /(?:^|[^\d])(\d+)(?:to(\d+))?J\b/i,
+      ];
+
+      for (const pattern of patterns) {
+        const m = haystack.match(pattern);
+        if (m) return m[2] || m[1];
+      }
+
+      return "—";
     }
 
     function getPatchLabel(row) {
@@ -733,7 +783,11 @@
       const options = [`<option value="">All</option>`];
 
       for (const value of values) {
-        const safe = String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        const safe = String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
         options.push(`<option value="${safe}">${safe}</option>`);
       }
 
@@ -744,6 +798,7 @@
     }
 
     function buildFilterOptions(rows) {
+      populateSelect("filter-source", uniqueSorted(rows.map(r => normalizeSource(r))));
       populateSelect("filter-process", uniqueSorted(rows.map(r => r.process || "unknown")));
       populateSelect("filter-backend", uniqueSorted(rows.map(r => inferBackend(r))));
       populateSelect("filter-jets", uniqueSorted(rows.map(r => inferJets(r))));
@@ -755,6 +810,7 @@
 
     function getCurrentFilters() {
       return {
+        source: document.getElementById("filter-source").value,
         process: document.getElementById("filter-process").value,
         backend: document.getElementById("filter-backend").value,
         jets: document.getElementById("filter-jets").value,
@@ -767,6 +823,7 @@
 
     function rowGroupKey(row) {
       return [
+        normalizeSource(row),
         row.process || "unknown",
         inferJets(row),
         row.mode || "unknown",
@@ -838,6 +895,7 @@
       const f = getCurrentFilters();
 
       filteredRows = allRows.filter(row => {
+        const source = normalizeSource(row);
         const process = row.process || "unknown";
         const backend = inferBackend(row);
         const jets = inferJets(row);
@@ -846,6 +904,7 @@
         const patch = getPatchLabel(row);
         const combo = getAthenaCombo(row);
 
+        if (f.source && source !== f.source) return false;
         if (f.process && process !== f.process) return false;
         if (f.backend && backend !== f.backend) return false;
         if (f.jets && jets !== f.jets) return false;
@@ -863,6 +922,7 @@
 
     function clearFilters() {
       [
+        "filter-source",
         "filter-process",
         "filter-backend",
         "filter-jets",
@@ -895,8 +955,17 @@
         const b = inferBackend(row);
         backendCounts[b] = (backendCounts[b] || 0) + 1;
       }
-
       const backendSummary = Object.entries(backendCounts)
+        .sort((a, b) => b[1] - a[1])
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(" · ");
+
+      const sourceCounts = {};
+      for (const row of rows) {
+        const s = getSourceLabel(row);
+        sourceCounts[s] = (sourceCounts[s] || 0) + 1;
+      }
+      const sourceSummary = Object.entries(sourceCounts)
         .sort((a, b) => b[1] - a[1])
         .map(([k, v]) => `${k}: ${v}`)
         .join(" · ");
@@ -904,6 +973,7 @@
       el.innerHTML = `
         <div class="summary-item"><strong>Total filtered runs:</strong> ${rows.length}</div>
         <div class="summary-item"><strong>Successful:</strong> ${okCount} &nbsp; <strong>Failed:</strong> ${failCount}</div>
+        <div class="summary-item"><strong>Source mix:</strong> ${sourceSummary || "—"}</div>
         <div class="summary-item"><strong>Comparable groups with FORTRAN baseline:</strong> ${comparableGroups}</div>
         <div class="summary-item"><strong>Median acceleration in current filter:</strong> ${accelRows.length ? formatAccel(median(accelRows)) : "—"}</div>
         <div class="summary-item"><strong>Rows with shadow patch signal:</strong> ${patchCount}</div>
@@ -923,7 +993,7 @@
         const best = accelEntries[0];
         document.getElementById("metric-best-accel").textContent = formatAccel(best.accel);
         document.getElementById("metric-best-accel-sub").textContent =
-          `${inferBackend(best.row)} on ${fmt(best.row.process)} ${inferJets(best.row)}J · ${best.row.mode || "—"}`;
+          `${getSourceLabel(best.row)} · ${inferBackend(best.row)} on ${fmt(best.row.process)} ${inferJets(best.row)}J · ${best.row.mode || "—"}`;
       } else {
         document.getElementById("metric-best-accel").textContent = "—";
         document.getElementById("metric-best-accel-sub").textContent = "best backend speedup vs FORTRAN";
@@ -932,7 +1002,7 @@
       const latest = rows[0];
       document.getElementById("metric-latest-mg").textContent = latest ? fmt(latest.madgraph_version) : "—";
       document.getElementById("metric-latest-mg-sub").textContent =
-        latest ? `latest row: ${fmt(latest.process)} ${inferJets(latest)}J · ${inferBackend(latest)}` : "latest run in dataset";
+        latest ? `latest row: ${getSourceLabel(latest)} · ${fmt(latest.process)} ${inferJets(latest)}J · ${inferBackend(latest)}` : "latest run in dataset";
     }
 
     function renderAccelerationCards(rows) {
@@ -989,7 +1059,7 @@
       const tbody = document.getElementById("results-body");
 
       if (!rows.length) {
-        tbody.innerHTML = `<tr><td colspan="18" class="empty-box">No rows found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="19" class="empty-box">No rows found.</td></tr>`;
         renderPagination(0);
         return;
       }
@@ -1004,6 +1074,7 @@
           <tr>
             <td class="${statusClass(row.status)}">${fmt(row.status)}</td>
             <td>${fmt(row.created)}</td>
+            <td>${fmt(getSourceLabel(row))}</td>
             <td>${fmt(row.process)}</td>
             <td>${fmt(inferJets(row))}</td>
             <td>${fmt(row.mode)}</td>
@@ -1011,8 +1082,8 @@
             <td>${fmt(row.madgraph_version)}</td>
             <td>${fmt(row.athena_version)}</td>
             <td>${fmtNum(row.wall_s, 2)}</td>
-            <td class="${accelClass(accel)}">${inferBackend(row) === "fortran" && baseline !== null ? "1.00×" : formatAccel(accel)}</td>
-            <td>${fmtNum(baseline, 2)}</td>
+            <td class="${accelClass(accel)}">${formatAccel(accel)}</td>
+            <td>${baseline !== null ? fmtNum(baseline, 2) : "—"}</td>
             <td>${fmtNum(row.throughput ?? row.raw_csv?.evt_per_s_generate ?? row.raw_csv?.evt_per_s_shell, 2)}</td>
             <td>${fmtNum(row.me_evals_sec, 2)}</td>
             <td>${fmt(row.gpu_name)}</td>
@@ -1082,7 +1153,7 @@
         renderAll();
         updateJsonLink();
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="18" class="error-box">Failed to load results: ${String(err.message || err)}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="19" class="error-box">Failed to load results: ${String(err.message || err)}</td></tr>`;
         document.getElementById("summary-list").innerHTML =
           `<div class="error-box">Failed to load summary: ${String(err.message || err)}</div>`;
         document.getElementById("accel-grid").innerHTML =
@@ -1093,6 +1164,7 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       [
+        "filter-source",
         "filter-process",
         "filter-backend",
         "filter-jets",

@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 from pathlib import Path
 from urllib.parse import parse_qs
 
@@ -14,14 +15,28 @@ def get_env_param(name: str) -> str:
     return params.get(name, [""])[0].strip()
 
 
+def normalize_source(row: dict) -> str:
+    src = str(row.get("source") or "").strip().lower()
+
+    if src == "standalone_mg_benchmark":
+        return "standalone"
+    if src == "manual_benchmark_patched":
+        return "athena_manual"
+    if src in {"standalone", "athena_manual"}:
+        return src
+    return "unknown"
+
+
 def normalize_backend(row: dict) -> str:
+    raw_csv = row.get("raw_csv") or {}
+
     candidates = [
         row.get("backend"),
-        row.get("raw_csv", {}).get("backend_label"),
-        row.get("raw_csv", {}).get("backend_requested"),
-        row.get("raw_csv", {}).get("backend_used"),
-        row.get("raw_csv", {}).get("jo_dir"),
-        row.get("raw_csv", {}).get("outtag"),
+        raw_csv.get("backend_label"),
+        raw_csv.get("backend_requested"),
+        raw_csv.get("backend_used"),
+        raw_csv.get("jo_dir"),
+        raw_csv.get("outtag"),
         row.get("csv_path"),
         row.get("log_generate_path"),
     ]
@@ -45,25 +60,39 @@ def normalize_backend(row: dict) -> str:
 
 
 def normalize_jets(row: dict) -> str:
+    raw_csv = row.get("raw_csv") or {}
+
     value = row.get("jets")
     if value not in (None, ""):
         return str(value)
 
     candidates = [
-        row.get("raw_csv", {}).get("jo_dir"),
-        row.get("raw_csv", {}).get("outtag"),
+        raw_csv.get("jets"),
+        raw_csv.get("njet"),
+        raw_csv.get("njets"),
+        raw_csv.get("jo_dir"),
+        raw_csv.get("outtag"),
         row.get("csv_path"),
         row.get("log_generate_path"),
+        row.get("run_id"),
     ]
     text = " ".join(str(x) for x in candidates if x)
 
-    import re
-    m = re.search(r"_(\d+)(?:to(\d+))?J\b", text, re.IGNORECASE)
-    if not m:
-        return "unknown"
-    if m.group(2):
-        return str(m.group(2))   # 0to3J -> 3
-    return str(m.group(1))
+    patterns = [
+        r"(?:^|[^0-9])(\d+)\s*to\s*(\d+)\s*j(?:[^a-z0-9]|$)",
+        r"(?:^|[^0-9])(\d+)to(\d+)j(?:[^a-z0-9]|$)",
+        r"(?:^|[^0-9])(\d+)j(?:[^a-z0-9]|$)",
+        r"_(\d+)(?:to(\d+))?J\b",
+    ]
+
+    for pat in patterns:
+        m = re.search(pat, text, re.IGNORECASE)
+        if m:
+            if m.lastindex and m.lastindex >= 2 and m.group(2):
+                return str(m.group(2))
+            return str(m.group(1))
+
+    return "unknown"
 
 
 def normalize_patch(row: dict) -> str:
@@ -78,6 +107,7 @@ def normalize_combo(row: dict) -> str:
 
 
 def matches_filters(row: dict, filters: dict) -> bool:
+    source = normalize_source(row)
     process = str(row.get("process") or "unknown")
     backend = normalize_backend(row)
     jets = normalize_jets(row)
@@ -86,6 +116,8 @@ def matches_filters(row: dict, filters: dict) -> bool:
     patch = normalize_patch(row)
     combo = normalize_combo(row)
 
+    if filters["source"] and source != filters["source"]:
+        return False
     if filters["process"] and process != filters["process"]:
         return False
     if filters["backend"] and backend != filters["backend"]:
@@ -122,6 +154,7 @@ if not isinstance(rows, list):
     raise SystemExit
 
 filters = {
+    "source": get_env_param("source"),
     "process": get_env_param("process"),
     "backend": get_env_param("backend"),
     "jets": get_env_param("jets"),
