@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>MadGraph Benchmark Plots</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root { --bg-1:#08111d; --bg-2:#0e1a2b; --panel:rgba(20,34,56,.82); --border:rgba(126,170,255,.22); --text:#e8eefc; --muted:#aab7d1; --radius:18px; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--text); background:radial-gradient(circle at 15% 20%, rgba(67,130,255,.14), transparent 28%),radial-gradient(circle at 80% 15%, rgba(103,212,255,.10), transparent 24%),radial-gradient(circle at 70% 80%, rgba(89,128,255,.10), transparent 30%),linear-gradient(180deg,#06101a 0%,#0a1423 45%,#08111d 100%); min-height:100vh; }
+    .container { width:min(1500px, calc(100% - 32px)); margin:20px auto 40px; }
+    .panel { background:linear-gradient(180deg, rgba(31,49,77,.62), rgba(18,30,49,.86)); border:1px solid var(--border); border-radius:var(--radius); box-shadow: inset 0 1px 0 rgba(255,255,255,.04),0 0 0 1px rgba(255,255,255,.01),0 14px 35px rgba(0,0,0,.35); backdrop-filter:blur(10px); }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+    .title { font-size:28px; font-weight:700; }
+    .subtitle { color:var(--muted); font-size:14px; margin-top:4px; }
+    .link { color:#7bf0ff; text-decoration:none; }
+    .link:hover { text-decoration:underline; }
+    .panel-header { padding:14px 18px 10px; border-bottom:1px solid rgba(255,255,255,.06); font-size:18px; font-weight:600; color:#f2f6ff; }
+    .controls { padding:16px; margin-bottom:16px; }
+    .controls-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:16px; align-items:end; }
+    .field { display:flex; flex-direction:column; gap:8px; }
+    .field label { font-size:14px; color:var(--text); font-weight:500; }
+    select { width:100%; padding:12px 14px; border-radius:12px; border:1px solid rgba(104,168,255,.28); background:linear-gradient(180deg, rgba(18,29,48,.95), rgba(12,22,39,.95)); color:var(--text); outline:none; }
+    .btn { width:100%; padding:13px 18px; border:1px solid rgba(108,175,255,.3); border-radius:12px; background:linear-gradient(180deg, rgba(86,160,255,.28), rgba(44,103,198,.30)), linear-gradient(180deg, rgba(17,31,52,.95), rgba(12,22,38,.95)); color:#eef6ff; font-weight:600; cursor:pointer; }
+    .summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-bottom:16px; }
+    .summary-card { padding:18px; }
+    .summary-label { color:var(--muted); font-size:14px; }
+    .summary-value { margin-top:8px; font-size:26px; font-weight:700; }
+    .plots-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .plot-box { padding:10px 12px 16px; }
+    .plot-title { font-size:16px; font-weight:600; padding:8px 8px 12px; }
+    .plot { height:520px; }
+    .footer { padding:14px 18px; color:var(--muted); font-size:14px; margin-top:16px; }
+    .loading,.error { padding:18px; color:var(--muted); }
+    @media (max-width:1100px) { .controls-grid,.summary,.plots-grid { grid-template-columns:1fr 1fr; } }
+    @media (max-width:720px) { .controls-grid,.summary,.plots-grid { grid-template-columns:1fr; } .title { font-size:22px; } .plot { height:430px; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div>
+        <div class="title">MadGraph Benchmark Plots</div>
+        <div class="subtitle">Interactive sweep plots from the combined benchmark cache.</div>
+      </div>
+      <a class="link" href="/mgbench/">Back to dashboard</a>
+    </div>
+
+    <div class="panel controls">
+      <div class="panel-header">Plot Filters</div>
+      <div class="controls-grid" style="padding-top:16px;">
+        <div class="field"><label for="filter-source">Source</label><select id="filter-source"></select></div>
+        <div class="field"><label for="filter-process">Process</label><select id="filter-process"></select></div>
+        <div class="field"><label for="filter-backend">Backend</label><select id="filter-backend"></select></div>
+        <div class="field"><label for="filter-mode">Mode</label><select id="filter-mode"></select></div>
+        <div class="field"><label for="filter-mg">MadGraph</label><select id="filter-mg"></select></div>
+        <div class="field"><label for="filter-patch">Patch</label><select id="filter-patch"></select></div>
+        <div class="field"><button class="btn" id="clear-filters" type="button">Clear Filters</button></div>
+      </div>
+    </div>
+
+    <div class="summary">
+      <div class="panel summary-card"><div class="summary-label">Total rows</div><div class="summary-value" id="meta-total">—</div></div>
+      <div class="panel summary-card"><div class="summary-label">OK rows</div><div class="summary-value" id="meta-ok">—</div></div>
+      <div class="panel summary-card"><div class="summary-label">Event sweeps</div><div class="summary-value" id="meta-events">—</div></div>
+      <div class="panel summary-card"><div class="summary-label">Jet sweeps</div><div class="summary-value" id="meta-jets">—</div></div>
+    </div>
+
+    <div class="plots-grid">
+      <div class="panel plot-box"><div class="plot-title">Wall time vs number of events</div><div id="plot-events" class="plot"><div class="loading">Loading plot…</div></div></div>
+      <div class="panel plot-box"><div class="plot-title">Wall time vs number of jets</div><div id="plot-jets" class="plot"><div class="loading">Loading plot…</div></div></div>
+    </div>
+
+    <div class="panel footer" id="footer-text">Plot data: /mgbench/data/plot_data.json</div>
+  </div>
+
+  <script>
+    const PLOT_DATA_URL = "/mgbench/data/plot_data.json";
+    let plotData = null;
+    function populateSelect(id, values) {
+      const el = document.getElementById(id); const current = el.value; const options = ['<option value="">All</option>'];
+      for (const value of values || []) { const safe = String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); options.push(`<option value="${safe}">${safe}</option>`); }
+      el.innerHTML = options.join(''); if ([...el.options].some(o => o.value === current)) el.value = current;
+    }
+    function currentFilters() { return { source:document.getElementById('filter-source').value, process:document.getElementById('filter-process').value, backend:document.getElementById('filter-backend').value, mode:document.getElementById('filter-mode').value, mg:document.getElementById('filter-mg').value, patch:document.getElementById('filter-patch').value }; }
+    function matchesMeta(meta, filters) { if (filters.source && meta.source_norm !== filters.source) return false; if (filters.process && meta.process_norm !== filters.process) return false; if (filters.backend && meta.backend_norm !== filters.backend) return false; if (filters.mode && meta.mode_norm !== filters.mode) return false; if (filters.mg && meta.mg_norm !== filters.mg) return false; if (filters.patch && meta.patch_norm !== filters.patch) return false; return true; }
+    function buildTraces(sweeps) { return sweeps.map(sweep => ({ type:'scatter', mode:'lines+markers', name:sweep.label, x:sweep.points.map(p=>p.x), y:sweep.points.map(p=>p.y), error_y:{ type:'data', symmetric:false, array:sweep.points.map(p=>p.y_err_high || 0), arrayminus:sweep.points.map(p=>p.y_err_low || 0), visible:true }, customdata:sweep.points.map(p=>[p.n_runs,p.y_min,p.y_max,p.y_mean]), hovertemplate:'<b>%{fullData.name}</b><br>x = %{x}<br>median wall = %{y:.2f} s<br>n runs = %{customdata[0]}<br>min = %{customdata[1]:.2f} s<br>max = %{customdata[2]:.2f} s<br>mean = %{customdata[3]:.2f} s<extra></extra>' })); }
+    function renderPlot(targetId, plotSpec, sweeps) {
+      const el = document.getElementById(targetId);
+      if (!sweeps.length) { el.innerHTML = '<div class="loading">No matching sweeps for the current filters.</div>'; return; }
+      Plotly.newPlot(el, buildTraces(sweeps), { title:{ text:plotSpec.title, font:{ color:'#e8eefc', size:18 } }, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', font:{ color:'#e8eefc' }, xaxis:{ title:plotSpec.x_title, gridcolor:'rgba(255,255,255,0.08)', zerolinecolor:'rgba(255,255,255,0.10)' }, yaxis:{ title:plotSpec.y_title, gridcolor:'rgba(255,255,255,0.08)', zerolinecolor:'rgba(255,255,255,0.10)' }, legend:{ orientation:'h', y:-0.22 }, margin:{ l:70, r:20, t:60, b:95 }, hovermode:'closest' }, { responsive:true, displaylogo:false });
+    }
+    function renderAll() {
+      const filters = currentFilters();
+      const eventSweeps = (plotData.plots.time_vs_events.sweeps || []).filter(s => matchesMeta(s.meta || {}, filters));
+      const jetSweeps = (plotData.plots.time_vs_jets.sweeps || []).filter(s => matchesMeta(s.meta || {}, filters));
+      document.getElementById('meta-total').textContent = String(plotData.meta?.n_rows_total ?? '—');
+      document.getElementById('meta-ok').textContent = String(plotData.meta?.n_rows_ok ?? '—');
+      document.getElementById('meta-events').textContent = String(eventSweeps.length);
+      document.getElementById('meta-jets').textContent = String(jetSweeps.length);
+      renderPlot('plot-events', plotData.plots.time_vs_events, eventSweeps);
+      renderPlot('plot-jets', plotData.plots.time_vs_jets, jetSweeps);
+    }
+    async function loadPlotData() {
+      try {
+        const res = await fetch(PLOT_DATA_URL, { cache:'no-store' }); const data = await res.json();
+        if (!res.ok) throw new Error(`HTTP ${res.status}`); if (!data || typeof data !== 'object' || !data.plots) throw new Error('plot_data.json is not in the expected format');
+        plotData = data;
+        populateSelect('filter-source', data.filters?.source || []); populateSelect('filter-process', data.filters?.process || []); populateSelect('filter-backend', data.filters?.backend || []); populateSelect('filter-mode', data.filters?.mode || []); populateSelect('filter-mg', data.filters?.mg || []); populateSelect('filter-patch', data.filters?.patch || []);
+        renderAll();
+      } catch (err) {
+        document.getElementById('plot-events').innerHTML = `<div class="error">Failed to load plot data: ${String(err.message || err)}</div>`;
+        document.getElementById('plot-jets').innerHTML = `<div class="error">Failed to load plot data: ${String(err.message || err)}</div>`;
+      }
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      ['filter-source','filter-process','filter-backend','filter-mode','filter-mg','filter-patch'].forEach(id => document.getElementById(id).addEventListener('change', renderAll));
+      document.getElementById('clear-filters').addEventListener('click', () => { ['filter-source','filter-process','filter-backend','filter-mode','filter-mg','filter-patch'].forEach(id => { document.getElementById(id).value=''; }); renderAll(); });
+      loadPlotData();
+    });
+  </script>
+</body>
+</html>
